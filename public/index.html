@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#081006">
+<title>আশ্রয় — অফলাইন জরুরি সহায়ক</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23142e21'/%3E%3Cpath d='M16 6 L27 14 V26 H20 V18 H12 V26 H5 V14 Z' fill='%234a8f63'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: dark;
+
+    /* Surfaces — Committed strategy: deep forest green carries the surface itself */
+    --bg: oklch(0.16 0.025 140);
+    --surface: oklch(0.22 0.03 140);
+    --surface-raised: oklch(0.27 0.032 140);
+    --surface-sunken: oklch(0.13 0.02 140);
+    --border: oklch(0.32 0.03 140);
+    --border-strong: oklch(0.52 0.035 140);
+
+    /* Brand */
+    --primary: oklch(0.50 0.11 138);
+    --primary-hover: oklch(0.56 0.115 138);
+    --primary-active: oklch(0.44 0.105 138);
+    --primary-ink: oklch(0.99 0.005 140);
+
+    /* Text */
+    --ink: oklch(0.96 0.01 140);
+    --muted: oklch(0.74 0.02 140);
+    --faint: oklch(0.63 0.02 140);
+
+    /* Signal Accent — reserved exclusively for the 999 call-to-action */
+    --accent: oklch(0.58 0.19 35);
+    --accent-hover: oklch(0.63 0.195 35);
+    --accent-ink: oklch(1 0 0);
+
+    /* Status */
+    --status-online: oklch(0.72 0.15 145);
+    --status-offline: oklch(0.58 0.015 140);
+    --status-checking: oklch(0.63 0.02 140);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 18px;
+    --radius-pill: 999px;
+
+    --space-3xs: 0.25rem;
+    --space-2xs: 0.5rem;
+    --space-xs: 0.75rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+
+    --font-sans: "Nirmala UI", "Noto Sans Bengali", "Kohinoor Bangla", "Segoe UI",
+      -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
+
+    --text-xs: 0.8125rem;
+    --text-sm: 0.9375rem;
+    --text-base: 1.0625rem;
+    --text-message: 1.125rem;
+    --text-lg: 1.25rem;
+
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --duration-fast: 150ms;
+    --duration-base: 200ms;
+
+    --z-header: 10;
+    --z-composer: 10;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button, textarea, input { font-family: inherit; font-size: inherit; color: inherit; }
+  button { cursor: pointer; }
+  h1, h2, h3, p { margin: 0; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary-hover);
+    outline-offset: 2px;
+  }
+
+  .app {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    height: 100dvh;
+    max-width: 720px;
+    margin-inline: auto;
+    background: var(--bg);
+  }
+
+  /* ---------- Header ---------- */
+  .app-header {
+    z-index: var(--z-header);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: max(var(--space-sm), env(safe-area-inset-top)) var(--space-md) var(--space-sm);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-width: 0;
+  }
+  .brand-mark {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: none;
+  }
+  .brand-name {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex: none;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3xs);
+    padding: var(--space-3xs) var(--space-2xs);
+    border-radius: var(--radius-pill);
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status-checking);
+    flex: none;
+    transition: background-color var(--duration-base) var(--ease-out-quart);
+  }
+  .status-badge[data-state="online"] .status-dot { background: var(--status-online); }
+  .status-badge[data-state="online"] { color: var(--ink); }
+  .status-badge[data-state="offline"] .status-dot { background: var(--status-offline); }
+  .status-badge[data-state="checking"] .status-dot {
+    animation: statusPulse 1.4s ease-in-out infinite;
+  }
+
+  .lang-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 var(--space-xs);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: var(--text-sm);
+    transition: background-color var(--duration-fast) var(--ease-out-quart),
+                border-color var(--duration-fast) var(--ease-out-quart);
+  }
+  .lang-toggle:hover { background: var(--surface-raised); border-color: var(--muted); }
+  .lang-toggle:active { background: var(--surface-sunken); }
+
+  /* ---------- Disclaimer ---------- */
+  .disclaimer-banner {
+    z-index: var(--z-header);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border);
+  }
+  .disclaimer-text {
+    flex: 1;
+    font-size: var(--text-xs);
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .call-999 {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3xs);
+    min-height: 44px;
+    padding: 0 var(--space-sm);
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color var(--duration-fast) var(--ease-out-quart),
+                transform var(--duration-fast) var(--ease-out-quart);
+  }
+  .call-999:hover { background: var(--accent-hover); }
+  .call-999:active { transform: scale(0.97); }
+
+  /* ---------- Message list ---------- */
+  .chat-main {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: var(--space-md);
+    scroll-behavior: smooth;
+  }
+  .message-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-height: 100%;
+  }
+
+  .empty-state {
+    margin: auto;
+    max-width: 42ch;
+    text-align: center;
+    padding: var(--space-lg) var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+  .empty-state-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+  .empty-state-body {
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+
+  .message {
+    display: flex;
+    max-width: 85%;
+    animation: messageIn var(--duration-base) var(--ease-out-quart) both;
+  }
+  .message--user { align-self: flex-end; }
+  .message--assistant { align-self: flex-start; }
+  .message--error { align-self: flex-start; max-width: 100%; }
+
+  .bubble {
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-message);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+  .message--user .bubble {
+    background: var(--primary);
+    color: var(--primary-ink);
+    border-bottom-right-radius: var(--radius-sm);
+  }
+  .message--assistant .bubble {
+    background: var(--surface-raised);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: var(--radius-sm);
+  }
+  .message--thinking .bubble {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+  .message--error .bubble {
+    width: 100%;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2xs);
+  }
+  .error-icon { flex: none; margin-top: 0.1em; }
+
+  .typing-dots {
+    display: inline-flex;
+    gap: 4px;
+    flex: none;
+  }
+  .typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    animation: dotPulse 1.2s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+  /* ---------- Scenario row ---------- */
+  .scenario-row {
+    z-index: var(--z-composer);
+    display: flex;
+    gap: var(--space-2xs);
+    padding: var(--space-2xs) var(--space-md);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+  .scenario-row::-webkit-scrollbar { display: none; }
+
+  .scenario-btn {
+    flex: none;
+    scroll-snap-align: start;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3xs);
+    min-height: 44px;
+    padding: 0 var(--space-sm);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color var(--duration-fast) var(--ease-out-quart),
+                border-color var(--duration-fast) var(--ease-out-quart);
+  }
+  .scenario-btn:hover { background: var(--surface-raised); }
+  .scenario-btn:active { transform: scale(0.98); }
+  .scenario-btn[aria-pressed="true"] {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-ink);
+  }
+  .scenario-emoji { font-size: 1.1em; }
+
+  /* ---------- Composer ---------- */
+  .composer {
+    z-index: var(--z-composer);
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2xs);
+    padding: var(--space-sm) var(--space-md) max(var(--space-sm), env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .composer-input {
+    flex: 1;
+    resize: none;
+    max-height: 8.5rem;
+    min-height: 44px;
+    padding: var(--space-2xs) var(--space-sm);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-strong);
+    background: var(--surface-sunken);
+    color: var(--ink);
+    font-size: var(--text-message);
+    line-height: 1.4;
+    transition: border-color var(--duration-fast) var(--ease-out-quart);
+  }
+  .composer-input::placeholder { color: var(--faint); }
+  .composer-input:focus-visible { border-color: var(--primary-hover); outline-offset: 0; }
+  .composer-input:disabled { opacity: 0.6; }
+
+  .send-btn {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: var(--primary-ink);
+    transition: background-color var(--duration-fast) var(--ease-out-quart),
+                transform var(--duration-fast) var(--ease-out-quart),
+                opacity var(--duration-fast) var(--ease-out-quart);
+  }
+  .send-btn:hover:not(:disabled) { background: var(--primary-hover); }
+  .send-btn:active:not(:disabled) { transform: scale(0.94); }
+  .send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .send-btn svg { width: 20px; height: 20px; }
+
+  /* ---------- Motion ---------- */
+  @keyframes messageIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes dotPulse {
+    0%, 60%, 100% { opacity: 0.3; transform: scale(0.85); }
+    30% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes statusPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .message { animation: none; opacity: 1; transform: none; }
+  }
+
+  @media (min-width: 720px) {
+    .app { border-inline: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="var(--surface-raised)"/>
+          <path d="M16 6 L27 14 V26 H20 V18 H12 V26 H5 V14 Z" fill="var(--primary)"/>
+        </svg>
+        <span class="brand-name" id="brandName">আশ্রয়</span>
+      </div>
+      <div class="header-controls">
+        <div class="status-badge" id="statusBadge" data-state="checking" role="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="statusLabel">…</span>
+        </div>
+        <button type="button" class="lang-toggle" id="langToggle" aria-label="ভাষা পরিবর্তন করুন / Switch language">EN</button>
+      </div>
+    </header>
+
+    <div class="disclaimer-banner" role="note">
+      <p class="disclaimer-text" id="disclaimerText"></p>
+      <a class="call-999" href="tel:999" id="call999">
+        <span aria-hidden="true">📞</span>
+        <span id="call999Label">৯৯৯</span>
+      </a>
+    </div>
+
+    <main class="chat-main" id="chatMain">
+      <div class="message-list" id="messageList" aria-live="polite" aria-relevant="additions">
+        <div class="empty-state" id="emptyState">
+          <p class="empty-state-title" id="emptyStateTitle"></p>
+          <p class="empty-state-body" id="emptyStateBody"></p>
+        </div>
+      </div>
+    </main>
+
+    <div class="scenario-row" id="scenarioRow" role="group" aria-label="পরিস্থিতি বেছে নিন">
+      <button type="button" class="scenario-btn" data-scenario="flood" aria-pressed="false">
+        <span class="scenario-emoji" aria-hidden="true">🌊</span><span data-i18n="scenarioFlood"></span>
+      </button>
+      <button type="button" class="scenario-btn" data-scenario="cyclone" aria-pressed="false">
+        <span class="scenario-emoji" aria-hidden="true">🌀</span><span data-i18n="scenarioCyclone"></span>
+      </button>
+      <button type="button" class="scenario-btn" data-scenario="firstaid" aria-pressed="false">
+        <span class="scenario-emoji" aria-hidden="true">🩹</span><span data-i18n="scenarioFirstaid"></span>
+      </button>
+      <button type="button" class="scenario-btn" data-scenario="kit" aria-pressed="false">
+        <span class="scenario-emoji" aria-hidden="true">📦</span><span data-i18n="scenarioKit"></span>
+      </button>
+    </div>
+
+    <form class="composer" id="composerForm">
+      <label for="messageInput" class="sr-only" id="inputLabel"></label>
+      <textarea
+        id="messageInput"
+        class="composer-input"
+        rows="1"
+        autocomplete="off"
+        autocorrect="off"
+      ></textarea>
+      <button type="submit" class="send-btn" id="sendBtn" aria-label="পাঠান">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 12L20 4L14 20L11 13L4 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
